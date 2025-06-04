@@ -3,6 +3,7 @@ export interface UserReviewDTO {
     firstName: string;
     lastName: string;
     email: string;
+    phoneNumber: string;
     totalReview: number;
     totalSpend: number;
 }

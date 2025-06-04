@@ -73,7 +73,7 @@ export default function ReviewList() {
 
     const page = searchParams.get("page");
     const search = searchParams.get("search");
-    const rating = searchParams.get("rating");
+    const rating = searchParams.get("rating") || "All";
 
     const { data, isLoading } = useReviewListQuery({
         page: Number(page || 1),
@@ -148,7 +148,7 @@ export default function ReviewList() {
                 <SearchInput placeholder="Tìm kiếm theo tên sản phẩm..." className="w-[300px]" />
 
                 {/* Rating Filter */}
-                <Select value={rating || ""} onValueChange={handleRatingChange}>
+                <Select value={rating} onValueChange={handleRatingChange}>
                     <SelectTrigger className="w-[150px]">
                         <SelectValue placeholder="Lọc theo đánh giá" />
                     </SelectTrigger>
@@ -256,7 +256,7 @@ export default function ReviewList() {
             {reviews.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                     {search || rating ?
-                        `Không tìm thấy đánh giá nào${search ? ` cho "${search}"` : ''}${rating ? ` với ${rating} sao` : ''}`
+                        `Không tìm thấy đánh giá nào`
                         : "Chưa có đánh giá nào"}
                 </div>
             )}

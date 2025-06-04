@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Review } from "@/types/review";
 import Image from "next/image";
+import { formatPrice, getColorText } from "@/lib/utils";
+import { ImageModal } from "../ui/image-modal";
 
 interface ReviewDetailDialogProps {
     review: Review;
@@ -23,7 +25,6 @@ interface ReviewDetailDialogProps {
 
 export function ReviewDetailDialog({ review, children }: ReviewDetailDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
     const renderStars = (rating: number) => {
         return (
@@ -79,26 +80,26 @@ export function ReviewDetailDialog({ review, children }: ReviewDetailDialogProps
                                 <div>
                                     <div className="flex items-start justify-between mb-2">
                                         <h3 className="text-lg font-semibold text-gray-900">
-                                            Thông tin sản phẩm
+                                            Thông tin đánh giá
                                         </h3>
                                         <Badge variant={review.published ? "default" : "secondary"}>
                                             {review.published ? "Hiển thị" : "Ẩn"}
                                         </Badge>
                                     </div>
                                     <div className="space-y-2">
+                                        <p>Mã đơn hàng: <strong>{review.orderCode}</strong></p>
                                         <p className="font-medium text-gray-900">
-                                            {review.productVariantDTO.productName}
+                                            Tên sản phẩm: {review.productVariantDTO.productName}
                                         </p>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <span>Màu sắc: <strong>{review.productVariantDTO.color}</strong></span>
+                                        <p>
+                                            Ngày đánh giá: {format(new Date(review.createdAt), "dd/MM/yyyy HH:mm", {
+                                                locale: vi,
+                                            })}
+                                        </p>
+                                        <div className="flex items-center gap-4 font-medium text-gray-600">
+                                            <span>Màu sắc: <strong>{getColorText(review.productVariantDTO.color)}</strong></span>
                                             <span>Kích cỡ: <strong>{review.productVariantDTO.size}</strong></span>
                                         </div>
-                                        <p className="text-sm text-gray-600">
-                                            Mã sản phẩm: <strong>{review.productVariantDTO.productName}</strong>
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            ID Variant: <strong>{review.productVariantDTO.id}</strong>
-                                        </p>
                                     </div>
                                 </div>
 
@@ -109,19 +110,20 @@ export function ReviewDetailDialog({ review, children }: ReviewDetailDialogProps
                                     </h3>
                                     <div className="space-y-2">
                                         <p className="font-medium text-gray-900">
-                                            {review.userReviewDTO.firstName || review.userReviewDTO.lastName
+                                            Tên khách hàng: {review.userReviewDTO.firstName || review.userReviewDTO.lastName
                                                 ? `${review.userReviewDTO.firstName || ''} ${review.userReviewDTO.lastName || ''}`.trim()
                                                 : 'Khách hàng ẩn danh'
                                             }
                                         </p>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <span>Mã đơn hàng: <strong>{review.orderCode}</strong></span>
-                                            <span>
-                                                {format(new Date(review.createdAt), "dd/MM/yyyy HH:mm", {
-                                                    locale: vi,
-                                                })}
-                                            </span>
-                                        </div>
+                                        <p className="font-medium text-gray-900">
+                                            Số điện thoại: {review.userReviewDTO.phoneNumber}
+                                        </p>
+                                        <p className="font-medium text-gray-900">
+                                            Số lần đánh giá: {review.userReviewDTO.totalReview}
+                                        </p>
+                                        <p className="font-medium text-gray-900">
+                                            Số tiền đã tiêu: {formatPrice(review.userReviewDTO.totalSpend)}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -166,78 +168,45 @@ export function ReviewDetailDialog({ review, children }: ReviewDetailDialogProps
                                         Hình ảnh từ khách hàng ({review.imageUrls.length}):
                                     </p>
 
-                                    {/* Main Image Display */}
-                                    <div className="mb-4">
-                                        <div className="aspect-video relative rounded-lg overflow-hidden bg-gray-100 max-w-md">
-                                            <Image
-                                                src={review.imageUrls[selectedMediaIndex]}
-                                                alt={`Review image ${selectedMediaIndex + 1}`}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Image Thumbnails */}
-                                    <div className="flex gap-2 flex-wrap">
+                                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                                         {review.imageUrls.map((imageUrl, index) => (
-                                            <button
+                                            <ImageModal
                                                 key={index}
-                                                onClick={() => setSelectedMediaIndex(index)}
-                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${selectedMediaIndex === index
-                                                    ? 'border-blue-500 ring-2 ring-blue-200'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                src={imageUrl}
+                                                alt={`Review image ${index + 1}`}
                                             >
-                                                <Image
-                                                    src={imageUrl}
-                                                    alt={`Review thumbnail ${index + 1}`}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </button>
+                                                <div className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity">
+                                                    <Image
+                                                        src={imageUrl}
+                                                        alt={`Review thumbnail ${index + 1}`}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                            </ImageModal>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
                             {/* Review Videos */}
-                            {review.videoUrl && review.videoUrl.length > 0 && (
+                            {review.videoUrl && (
                                 <div className="mt-6">
                                     <p className="text-sm text-gray-600 mb-3">
-                                        Video từ khách hàng ({review.videoUrl.length}):
+                                        Video từ khách hàng:
                                     </p>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {review.videoUrl.map((videoUrl, index) => (
-                                            <div key={index} className="aspect-video relative rounded-lg overflow-hidden bg-gray-100">
-                                                <video
-                                                    src={videoUrl}
-                                                    controls
-                                                    className="w-full h-full object-cover"
-                                                >
-                                                    Trình duyệt không hỗ trợ video.
-                                                </video>
-                                            </div>
-                                        ))}
+                                    <div className="aspect-video relative rounded-lg overflow-hidden bg-gray-100">
+                                        <video
+                                            src={review.videoUrl}
+                                            controls
+                                            className="w-full h-full object-cover"
+                                        >
+                                            Trình duyệt không hỗ trợ video.
+                                        </video>
                                     </div>
                                 </div>
                             )}
-
-                            {/* Review Metadata */}
-                            <div className="border-t pt-4 mt-6">
-                                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                                    Thông tin bổ sung
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                                    <div>
-                                        <span className="font-medium">Review ID:</span> {review.reviewId}
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">ID:</span> {review.reviewId}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 ) : (

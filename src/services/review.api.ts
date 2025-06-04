@@ -31,10 +31,12 @@ export const reviewApi = {
     ) => {
         let url = `/api/v1/reviews?page=${page - 1}&size=${pageSize}`;
         if (search) {
-            url += `&filter=productName~'${encodeURIComponent(search)}'`;
+            url += `&filter=lineItem.order.code~~'${encodeURIComponent(search)}'`;
+            url += `or product.name~~'${encodeURIComponent(search)}'`;
+            url += `or user.profile.fullName~~'${encodeURIComponent(search)}'`;
         }
         if (rating) {
-            url += `&filter=rating~'${rating}'`;
+            url += `or filter=rating~'${rating}'`;
         }
         url += "&sort=createdAt,desc";
         const response = await httpClient.get(url);
