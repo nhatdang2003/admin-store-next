@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Search, Pencil, Trash2, MoreHorizontal, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Search, Pencil, Trash2, MoreHorizontal, X, Download, Loader2, ChevronDown, FileUp } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -9,6 +9,8 @@ import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
+    useDownloadTemplateImportCategory,
+    useImportCategoryMutation,
 } from "@/hooks/use-category-query";
 import { Pagination } from "@/components/shared/pagination";
 import type { Category, CategoryListResponse } from "@/types/category";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CategoryForm from "@/components/categories/category-form";
 import { CategorySearch } from "@/components/categories/category-search";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CategoryList() {
     const searchParams = useSearchParams();
@@ -56,6 +59,12 @@ export default function CategoryList() {
     const addMutation = useAddCategoryMutation();
     const updateMutation = useUpdateCategoryMutation();
     const deleteMutation = useDeleteCategoryMutation();
+
+    // Excel functionality
+    const downloadTemplateMutation = useDownloadTemplateImportCategory();
+    const importCategoryMutation = useImportCategoryMutation();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -92,30 +101,108 @@ export default function CategoryList() {
         }
     };
 
+    // Excel handlers
+    const handleImportExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+            toast({
+                variant: "destructive",
+                title: "Lỗi",
+                description: "Chỉ chấp nhận file Excel (.xlsx, .xls)",
+            });
+            return;
+        }
+
+        console.log("Importing file:", file.name);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        importCategoryMutation.mutate(formData);
+
+        // Reset input
+        event.target.value = '';
+    };
+
+    const triggerFileSelect = () => {
+        fileInputRef.current?.click();
+    };
+
     return (
         <div className="space-y-4">
+            {/* Hidden file input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImportExcel}
+                accept=".xlsx,.xls"
+                style={{ display: 'none' }}
+            />
+
             <h1 className="text-2xl font-bold">Danh mục sản phẩm</h1>
 
             <div className="flex justify-between items-center">
                 <CategorySearch />
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Thêm danh mục
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Thêm danh mục mới</DialogTitle>
-                        </DialogHeader>
-                        <CategoryForm
-                            onSave={handleAddCategory}
-                            onCancel={() => setIsAddDialogOpen(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <div className="flex gap-2">
+                    {/* Excel Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Excel
+                                <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                                onClick={() => downloadTemplateMutation.mutate()}
+                                disabled={downloadTemplateMutation.isPending}
+                                className="cursor-pointer"
+                            >
+                                {downloadTemplateMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Download className="mr-2 h-4 w-4" />
+                                )}
+                                Tải mẫu Excel
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={triggerFileSelect}
+                                disabled={importCategoryMutation.isPending}
+                                className="cursor-pointer"
+                            >
+                                {importCategoryMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <FileUp className="mr-2 h-4 w-4" />
+                                )}
+                                Import Excel
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Add Category Dialog */}
+                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" /> Thêm danh mục
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Thêm danh mục mới</DialogTitle>
+                            </DialogHeader>
+                            <CategoryForm
+                                onSave={handleAddCategory}
+                                onCancel={() => setIsAddDialogOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
+            {/* Categories Table */}
             <>
                 <Table>
                     <TableHeader>
@@ -133,7 +220,7 @@ export default function CategoryList() {
                                     <img
                                         src={category.imageUrl}
                                         alt={category.name}
-                                        className="w-20 object-cover aspect-[2/3]"
+                                        className="w-20 object-cover aspect-[2/3] rounded-md"
                                     />
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -147,13 +234,14 @@ export default function CategoryList() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
                                                 onSelect={() => setEditingCategory(category)}
+                                                className="cursor-pointer"
                                             >
                                                 <Pencil className="mr-2 h-4 w-4" />
                                                 <span>Chỉnh sửa</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 onSelect={() => handleDeleteCategory(category.id)}
-                                                className="text-destructive"
+                                                className="text-destructive cursor-pointer"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 <span>Xóa</span>
@@ -166,6 +254,7 @@ export default function CategoryList() {
                     </TableBody>
                 </Table>
 
+                {/* Empty State */}
                 {data?.data.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                         {search
@@ -175,12 +264,14 @@ export default function CategoryList() {
                 )}
             </>
 
+            {/* Pagination */}
             {meta && (
                 <div className="flex flex-col gap-2">
                     <Pagination currentPage={meta.page + 1} totalPages={meta.pages} />
                 </div>
             )}
 
+            {/* Edit Dialog */}
             <Dialog
                 open={!!editingCategory}
                 onOpenChange={() => setEditingCategory(null)}

@@ -1,5 +1,5 @@
 import type { Category, CategoryListResponse } from "@/types/category";
-import httpClient from "./axios-config";
+import httpClient, { tokenManager } from "./axios-config";
 
 export const categoryApi = {
     getCategories: async (
@@ -34,5 +34,24 @@ export const categoryApi = {
     deleteCategory: async (id: number) => {
         const response = await httpClient.delete(`/api/v1/categories/${id}`);
         return response.data;
+    },
+
+    downloadTemplateImportCategory: async () => {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BACKEND}/api/v1/workspace/import/template/categories`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenManager.getAccessToken()}`
+            },
+        });
+        return response.blob();
+    },
+
+    importCategory: (data: any) => {
+        return httpClient.post("/api/v1/workspace/import/categories", data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
     },
 };

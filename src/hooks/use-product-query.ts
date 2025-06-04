@@ -1,6 +1,7 @@
 import { productApi } from "@/services/product.api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./use-toast";
+import { saveAs } from 'file-saver';
 
 export const useProductListQuery = (
     page: number,
@@ -74,6 +75,52 @@ export const useDeleteProductMutation = () => {
                 variant: "destructive",
                 title: "Lỗi",
                 description: error?.message || "Đã có lỗi xảy ra khi xóa sản phẩm",
+            });
+        },
+    });
+};
+
+export const useDownloadTemplateImportProduct = () => {
+    const { toast } = useToast();
+
+    return useMutation({
+        mutationFn: async () => {
+            const response = await productApi.getTemplateImportProduct();
+
+            saveAs(response, 'mau-san-pham.xlsx');
+        },
+        onSuccess: () => {
+            toast({
+                title: "Thành công",
+                description: "Tải mẫu thành công",
+            });
+        },
+        onError: (error: any) => {
+            toast({
+                variant: "destructive",
+                title: "Lỗi",
+                description: error?.response?.data?.message || "Không thể tải mẫu",
+            });
+        },
+    });
+};
+
+export const useImportProductMutation = () => {
+    const { toast } = useToast();
+
+    return useMutation({
+        mutationFn: (data: any) => productApi.importProduct(data),
+        onSuccess: () => {
+            toast({
+                title: "Thành công",
+                description: "Import sản phẩm thành công",
+            });
+        },
+        onError: (error: any) => {
+            toast({
+                variant: "destructive",
+                title: "Lỗi",
+                description: error?.response?.data?.message || "Không thể import sản phẩm",
             });
         },
     });

@@ -186,33 +186,50 @@ export function ProductFormDialog({
 
     const handleFormSubmit = async (data: ProductData) => {
         try {
-            // Upload new images if they have file property
+            // Bước 1: Upload tất cả ảnh chính lên Google Cloud
             const newImageUrls = await Promise.all(
                 uploadedImages
                     .filter((img) => img.file) // Chỉ upload những ảnh mới
                     .map(async (img) => {
-                        const fileName = `${img.file!.name}`;
+                        const fileName = `${Date.now()}-${img.file!.name}`;
                         const { signedUrl } = await imageApi.getPresignedUrl(fileName);
                         await imageApi.uploadImage(signedUrl, img.file!);
                         return signedUrl.split("?")[0]; // Lấy URL không có query params
                     })
             );
 
-            // Combine existing URLs with new URLs
-            const finalImages = [
-                ...uploadedImages
-                    .filter((img) => !img.file) // Giữ lại những ảnh cũ
-                    .map((img) => img.url!),
-                ...newImageUrls,
-            ];
+            // Bước 2: Tạo map để mapping từ preview URL sang real URL
+            const imageUrlMap = new Map<string, string>();
 
-            // Xử lý variants
+            // Map ảnh mới (preview -> real URL)
+            uploadedImages
+                .filter((img) => img.file)
+                .forEach((img, index) => {
+                    imageUrlMap.set(img.preview, newImageUrls[index]);
+                });
+
+            // Map ảnh cũ (preview -> existing URL)
+            uploadedImages
+                .filter((img) => !img.file && img.url)
+                .forEach((img) => {
+                    imageUrlMap.set(img.preview, img.url!);
+                });
+
+            // Bước 3: Xử lý ảnh chính
+            const finalImages = uploadedImages.map((img) => {
+                return imageUrlMap.get(img.preview) || img.url || img.preview;
+            });
+
+            // Bước 4: Xử lý variants - thay thế preview URL bằng real URL
             const processedVariants = data.variants.map((variant) => ({
                 ...variant,
-                id: mode === "edit" ? variant.id || 0 : 0, // Giữ id cũ nếu là edit mode
+                id: mode === "edit" ? variant.id || 0 : 0,
                 images: variant.images.map((img: any) => {
                     if (typeof img === "string") return img;
-                    return img.url || img.preview;
+
+                    // Tìm URL thực tế từ map
+                    const realUrl = imageUrlMap.get(img.preview || img.url);
+                    return realUrl || img.url || img.preview;
                 }),
             }));
 
@@ -222,6 +239,9 @@ export function ProductFormDialog({
                 images: finalImages,
                 variants: processedVariants,
             };
+
+            console.log("Final product data:", finalProductData);
+            console.log("Image URL mapping:", imageUrlMap);
 
             if (mode === "edit") {
                 await updateProductMutation.mutateAsync({
@@ -236,7 +256,7 @@ export function ProductFormDialog({
 
             setIsOpen(false);
             reset();
-            setUploadedImages([]); // Reset uploaded images
+            setUploadedImages([]);
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -547,6 +567,7 @@ export function ProductFormDialog({
                                                                                     (image.url || image.preview)
                                                                             )
                                                                             : [...field.value, image];
+                                                                        console.log("newImages", newImages);
                                                                         field.onChange(newImages);
                                                                     }}
                                                                 >

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, MoreHorizontal, Download, Loader2, ChevronDown, FileUp } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,11 +43,14 @@ import {
     useAddProductMutation,
     useUpdateProductMutation,
     useDeleteProductMutation,
+    useDownloadTemplateImportProduct,
+    useImportProductMutation,
 } from "@/hooks/use-product-query";
 import Image from "next/image";
 import { ProductData } from "@/types/product";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { useCategoryListQuery } from "@/hooks/use-category-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductList() {
     const searchParams = useSearchParams();
@@ -60,6 +63,10 @@ export default function ProductList() {
     const updateProductMutation = useUpdateProductMutation();
     const deleteProductMutation = useDeleteProductMutation();
     const [deletingProduct, setDeletingProduct] = useState<ProductData | null>(null);
+    const downloadTemplateMutation = useDownloadTemplateImportProduct();
+    const importProductMutation = useImportProductMutation();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     const handleAddProduct = async (productData: ProductData) => {
         try {
@@ -90,21 +97,91 @@ export default function ProductList() {
         } catch (error) { }
     };
 
+    const handleImportExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+            toast({
+                variant: "destructive",
+                title: "Lỗi",
+                description: "Chỉ chấp nhận file Excel (.xlsx, .xls)",
+            });
+            return;
+        }
+
+        console.log(file);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        importProductMutation.mutate(formData);
+
+        event.target.value = '';
+    };
+
+    const triggerFileSelect = () => {
+        fileInputRef.current?.click();
+    };
+
     const products = data?.data || [];
     const meta = data?.meta;
 
     return (
         <div className="space-y-4">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImportExcel}
+                accept=".xlsx,.xls"
+                style={{ display: 'none' }}
+            />
             <h2 className="text-3xl font-bold tracking-tight">Sản phẩm</h2>
             <div className="flex justify-between items-center">
                 <SearchInput placeholder="Tìm kiếm sản phẩm..." className="w-[300px]" />
-                <ProductFormDialog
-                    mode="add"
-                    categories={categories?.data || []}
-                    onSubmit={handleAddProduct}
-                    addProductMutation={addProductMutation}
-                    updateProductMutation={updateProductMutation}
-                />
+                <div className="flex gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Excel
+                                <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                                onClick={() => downloadTemplateMutation.mutate()}
+                                disabled={downloadTemplateMutation.isPending}
+                                className="cursor-pointer"
+                            >
+                                {downloadTemplateMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Download className="mr-2 h-4 w-4" />
+                                )}
+                                Tải mẫu Excel
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={triggerFileSelect}
+                                disabled={importProductMutation.isPending}
+                                className="cursor-pointer"
+                            >
+                                {importProductMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <FileUp className="mr-2 h-4 w-4" />
+                                )}
+                                Import Excel
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <ProductFormDialog
+                        mode="add"
+                        categories={categories?.data || []}
+                        onSubmit={handleAddProduct}
+                        addProductMutation={addProductMutation}
+                        updateProductMutation={updateProductMutation}
+                    />
+                </div>
             </div>
 
             <Table>

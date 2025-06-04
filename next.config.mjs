@@ -12,7 +12,11 @@ const nextConfig = {
                 hostname: "res.cloudinary.com",
                 pathname: "/db9vcatme/**",
             },
-
+            {
+                protocol: 'https',
+                hostname: "product.hstatic.net",
+                pathname: "/**",
+            },
         ],
     },
     logging: {

@@ -1,4 +1,4 @@
-import httpClient from "./axios-config";
+import httpClient, { tokenManager } from "./axios-config";
 
 export const productApi = {
     getProducts: async (
@@ -93,5 +93,22 @@ export const productApi = {
     },
     deleteProduct: (id: number) => {
         return httpClient.delete(`/api/v1/products/${id}`);
+    },
+    getTemplateImportProduct: async () => {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BACKEND}/api/v1/workspace/import/template/products`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenManager.getAccessToken()}`
+            },
+        });
+        return response.blob();
+    },
+    importProduct: (data: any) => {
+        return httpClient.post("/api/v1/workspace/import/products", data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
     },
 };

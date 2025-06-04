@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3001",
     "lint": "next lint"
   },
   "dependencies": {
@@ -37,6 +37,7 @@
     "cmdk": "^0.2.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.1",
+    "file-saver": "^2.0.5",
     "input-otp": "^1.4.2",
     "jose": "^5.9.6",
     "js-cookie": "^3.0.5",
@@ -54,6 +55,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
