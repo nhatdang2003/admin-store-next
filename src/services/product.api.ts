@@ -1,4 +1,5 @@
 import httpClient, { tokenManager } from "./axios-config";
+import { useLogout } from "@/hooks/use-auth-query";
 
 export const productApi = {
     getProducts: async (
@@ -95,14 +96,10 @@ export const productApi = {
         return httpClient.delete(`/api/v1/products/${id}`);
     },
     getTemplateImportProduct: async () => {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BACKEND}/api/v1/workspace/import/template/products`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${tokenManager.getAccessToken()}`
-            },
+        const response = await httpClient.get("/api/v1/workspace/import/template/products", {
+            responseType: 'blob'
         });
-        return response.blob();
+        return response;
     },
     importProduct: (data: any) => {
         return httpClient.post("/api/v1/workspace/import/products", data, {

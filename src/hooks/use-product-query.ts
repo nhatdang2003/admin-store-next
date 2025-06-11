@@ -67,6 +67,7 @@ export const useDeleteProductMutation = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] });
             toast({
+                variant: "success",
                 title: "Xóa sản phẩm thành công",
             });
         },
@@ -91,6 +92,7 @@ export const useDownloadTemplateImportProduct = () => {
         },
         onSuccess: () => {
             toast({
+                variant: "success",
                 title: "Thành công",
                 description: "Tải mẫu thành công",
             });
@@ -112,6 +114,7 @@ export const useImportProductMutation = () => {
         mutationFn: (data: any) => productApi.importProduct(data),
         onSuccess: () => {
             toast({
+                variant: "success",
                 title: "Thành công",
                 description: "Import sản phẩm thành công",
             });

@@ -20,6 +20,7 @@ import {
 import { SIDEBAR } from "@/constants/sidebar";
 import ScalableStoreLogo from "../ui/logo-store";
 import { useAccountInfo } from "@/hooks/use-account-query";
+import { NotificationBell } from "../shared/notification-bell";
 
 export function WorkspaceLayout({
     children
@@ -71,8 +72,9 @@ export function WorkspaceLayout({
                         </SidebarContent>
                     </Sidebar>
                     <div className={`flex-1 overflow-auto`}>
-                        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+                        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6 justify-between">
                             <SidebarTrigger />
+                            <NotificationBell />
                         </header>
                         <main className="flex-1 overflow-auto p-6">{children}</main>
                     </div>

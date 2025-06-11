@@ -170,20 +170,22 @@ export function ReviewDetailDialog({ review, children }: ReviewDetailDialogProps
 
                                     <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                                         {review.imageUrls.map((imageUrl, index) => (
-                                            <ImageModal
-                                                key={index}
-                                                src={imageUrl}
-                                                alt={`Review image ${index + 1}`}
-                                            >
-                                                <div className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity">
-                                                    <Image
-                                                        src={imageUrl}
-                                                        alt={`Review thumbnail ${index + 1}`}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                </div>
-                                            </ImageModal>
+                                            imageUrl ? (
+                                                <ImageModal
+                                                    key={index}
+                                                    src={imageUrl}
+                                                    alt={`Review image ${index + 1}`}
+                                                >
+                                                    <div className="relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity">
+                                                        <Image
+                                                            src={imageUrl}
+                                                            alt={`Review thumbnail ${index + 1}`}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                    </div>
+                                                </ImageModal>
+                                            ) : null
                                         ))}
                                     </div>
                                 </div>

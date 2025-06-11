@@ -5,6 +5,7 @@ import { useToast } from "./use-toast";
 import { useRouter } from "next/navigation";
 import { AFTER_LOGIN } from "@/constants/workspace";
 import { useUserStore } from "@/stores/useUserStore";
+import { useWebSocket } from "@/contexts/websocket.context";
 
 type WorkspaceRole = keyof typeof AFTER_LOGIN;
 
@@ -12,7 +13,7 @@ export function useLoginWorkspace(redirect: string) {
     const router = useRouter();
     const { toast } = useToast();
     const setAuthenticated = useUserStore((state: any) => state.setAuthenticated)
-
+    const { connect } = useWebSocket();
 
     return useMutation({
         mutationKey: ["auth", "login-workspace"],
@@ -23,6 +24,7 @@ export function useLoginWorkspace(redirect: string) {
             }
             router.push("/workspace/dashboard");
             router.refresh();
+            connect();
         },
         onError: (error: any) => {
             console.log(error.message);

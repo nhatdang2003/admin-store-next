@@ -17,6 +17,11 @@ const nextConfig = {
                 hostname: "product.hstatic.net",
                 pathname: "/**",
             },
+            {
+                protocol: 'https',
+                hostname: "lh3.googleusercontent.com",
+                pathname: "/**",
+            },
         ],
     },
     logging: {

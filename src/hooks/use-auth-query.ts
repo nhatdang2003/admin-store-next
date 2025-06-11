@@ -5,6 +5,7 @@ import { toast, useToast } from "./use-toast";
 import type { LoginCredentials, RegisterCredentials } from "@/types/auth";
 import { PROTECTED_PATHS } from "@/constants/routes";
 import { useUserStore } from "@/stores/useUserStore";
+import { useWebSocket } from "@/contexts/websocket.context";
 
 export const authKeys = {
     all: ["auth"] as const,
@@ -17,6 +18,7 @@ export function useLogin(redirect: string) {
     const router = useRouter();
     const { toast } = useToast();
     const setAuthenticated = useUserStore((state: any) => state.setAuthenticated)
+    const { connect } = useWebSocket();
 
     return useMutation({
         mutationKey: authKeys.login(),
@@ -27,6 +29,7 @@ export function useLogin(redirect: string) {
             }
             router.push(redirect ?? "/");
             router.refresh();
+            connect();
         },
         onError: (error: any) => {
             toast({
@@ -91,7 +94,7 @@ export function useActivateAccount() {
     });
 }
 
-export function useLogout(redirect: string) {
+export function useLogout(redirect?: string) {
     const router = useRouter();
     const queryClient = useQueryClient();
     const resetAuthenticated = useUserStore((state: any) => state.resetAuthenticated)
@@ -107,7 +110,7 @@ export function useLogout(redirect: string) {
         onSuccess: () => {
             // Clear all queries and cache
             queryClient.clear();
-            if (PROTECTED_PATHS.some((path) => redirect.startsWith(path))) {
+            if (redirect && PROTECTED_PATHS.some((path) => redirect.startsWith(path))) {
                 router.push("/login");
             } else {
                 router.push(redirect ?? "/");

@@ -33,14 +33,15 @@ export const reviewApi = {
         if (search || rating) {
             url += "&filter=";
         }
+        if (rating) {
+            url += `rating~'${rating}'`;
+        }
         if (search) {
-            url += `lineItem.order.code~~'${encodeURIComponent(search)}'`;
+            url += `&filter=lineItem.order.code~~'${encodeURIComponent(search)}'`;
             url += `or product.name~~'${encodeURIComponent(search)}'`;
             url += `or user.profile.fullName~~'${encodeURIComponent(search)}'`;
         }
-        if (rating) {
-            url += `or rating~'${rating}'`;
-        }
+
         url += "&sort=createdAt,desc";
         const response = await httpClient.get(url);
         return response.data;

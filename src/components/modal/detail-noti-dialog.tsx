@@ -35,14 +35,15 @@ import { STATUS_ORDER } from "@/constants/order";
 
 interface OrderDetailModalProps {
     orderId: string;
-    updateStatus?: boolean;
+    open: boolean;
+    onClose: () => void;
 }
 
-export function OrderDetailModal({
+export function OrderDetailNotiModal({
     orderId,
-    updateStatus,
+    open,
+    onClose,
 }: OrderDetailModalProps) {
-    const [isOpen, setIsOpen] = useState(false);
     const { data: order, isLoading } = useOrder(orderId);
     const { mutate: updateOrderStatus } = useUpdateOrderStatus();
 
@@ -118,16 +119,7 @@ export function OrderDetailModal({
     );
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button
-                    variant={updateStatus ? "ghost" : "outline"}
-                    className="w-full sm:w-auto"
-                >
-                    <Eye className="h-6 w-6 mr-2" />
-                    Xem chi tiết
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
                 <DialogHeader className="px-4 py-2 sm:px-6 sm:py-4 border-b">
                     <div className="flex items-center justify-between">
@@ -271,37 +263,34 @@ export function OrderDetailModal({
                                     </div>
                                 </div>
                             </div>
-
                             {/* Order Actions */}
-                            {updateStatus && order && (
-                                <div className="border-t pt-4 mt-4">
-                                    <div className="flex flex-col sm:flex-row items-center justify-end gap-4">
-                                        <div className="text-sm text-muted-foreground">
-                                            Trạng thái hiện tại:
-                                        </div>
-                                        <Select
-                                            value={order.status}
-                                            onValueChange={(value) => {
-                                                updateOrderStatus({
-                                                    orderId,
-                                                    status: value,
-                                                });
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-[200px]">
-                                                <SelectValue placeholder="Chọn trạng thái" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {STATUS_ORDER.map((status) => (
-                                                    <SelectItem key={status.value} value={status.value}>
-                                                        {status.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                            <div className="border-t pt-4 mt-4">
+                                <div className="flex flex-col sm:flex-row items-center justify-end gap-4">
+                                    <div className="text-sm text-muted-foreground">
+                                        Trạng thái hiện tại:
                                     </div>
+                                    <Select
+                                        value={order.status}
+                                        onValueChange={(value) => {
+                                            updateOrderStatus({
+                                                orderId,
+                                                status: value,
+                                            });
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Chọn trạng thái" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {STATUS_ORDER.map((status) => (
+                                                <SelectItem key={status.value} value={status.value}>
+                                                    {status.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     ) : (
                         <div className="p-4 text-center text-muted-foreground">
