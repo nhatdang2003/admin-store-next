@@ -1,3 +1,4 @@
+import { removeRefreshTokenCookie } from '@/actions/helper';
 import { PUBLIC_ENDPOINTS } from '@/constants/endpoint';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
@@ -27,6 +28,25 @@ export const tokenManager = {
             return true;
         }
     }
+};
+
+// Refresh token queue management
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (value: any) => void;
+    reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(({ resolve, reject }) => {
+        if (error) {
+            reject(error);
+        } else {
+            resolve(token);
+        }
+    });
+
+    failedQueue = [];
 };
 
 // Create axios instance
@@ -70,7 +90,23 @@ const createAxiosInstance = (): AxiosInstance => {
 
             // Handle 401 Unauthorized
             if (error.response?.status === 401 && !originalRequest._retry) {
+                // Nếu đang refresh token, thêm request vào queue để đợi
+                if (isRefreshing) {
+                    return new Promise((resolve, reject) => {
+                        failedQueue.push({ resolve, reject });
+                    }).then(token => {
+                        if (token) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            return instance(originalRequest);
+                        }
+                        return Promise.reject(error);
+                    }).catch(err => {
+                        return Promise.reject(err);
+                    });
+                }
+
                 originalRequest._retry = true;
+                isRefreshing = true;
 
                 try {
                     // Call refresh token endpoint - cookie sẽ được gửi tự động
@@ -85,19 +121,26 @@ const createAxiosInstance = (): AxiosInstance => {
                     // Chỉ cập nhật access token trong localStorage
                     tokenManager.setAccessToken(access_token);
 
+                    // Xử lý tất cả requests trong queue với token mới
+                    processQueue(null, access_token);
+
                     // Retry original request with new token
                     originalRequest.headers.Authorization = `Bearer ${access_token}`;
                     return instance(originalRequest);
 
                 } catch (refreshError) {
-                    // Refresh failed, redirect to login
+                    // Refresh failed, xử lý queue với error và redirect to login
+                    processQueue(refreshError, null);
                     tokenManager.clearTokens();
 
+                    removeRefreshTokenCookie();
                     if (typeof window !== 'undefined') {
                         window.location.href = '/login';
                     }
 
                     return Promise.reject(refreshError);
+                } finally {
+                    isRefreshing = false;
                 }
             }
 
@@ -139,4 +182,4 @@ export const httpClient = {
     },
 };
 
-export default httpClient; 
+export default httpClient;

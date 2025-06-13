@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useState } from "react";
 
-export function OrderSearch() {
+export function OrderSearch({ placeholder }: { placeholder?: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -36,7 +36,7 @@ export function OrderSearch() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="text"
-                    placeholder="Tìm kiếm theo mã đơn hàng, tên khách hàng..."
+                    placeholder={placeholder || "Tìm kiếm theo mã đơn hàng, tên khách hàng..."}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-96 pl-9"
