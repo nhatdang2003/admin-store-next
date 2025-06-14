@@ -47,6 +47,7 @@ export const useUpdateOrderStatus = () => {
         mutationFn: (data: { orderId: string; status: string }) =>
             orderApi.updateOrderStatus(data.orderId, data.status),
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["orders"] });
             queryClient.invalidateQueries({ queryKey: ["order"] });
             toast({
                 title: "Cập nhật trạng thái thành công",
