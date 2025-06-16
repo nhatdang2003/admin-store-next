@@ -20,6 +20,10 @@ import {
     getShippingMethodText,
     getStatusColor,
     getStatusText,
+    getStatusReturnText,
+    getStatusCashBackText,
+    getStatusCashBackColor,
+    getStatusReturnColor,
 } from "@/lib/utils";
 import { ActiveFilters } from "@/components/orders/active-filters";
 import { OrderSearch } from "@/components/orders/order-search";
@@ -79,18 +83,18 @@ export default function ReturnRequestList() {
                             <TableCell className="text-center">
                                 <Badge
                                     variant="secondary"
-                                    className={getStatusColor(returnRequest.status)}
+                                    className={getStatusReturnColor(returnRequest.status)}
                                 >
-                                    {getStatusText(returnRequest.status)}
+                                    {getStatusReturnText(returnRequest.status)}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-center">
                                 {returnRequest.cashBackStatus && (
                                     <Badge
                                         variant="secondary"
-                                        className={getStatusColor(returnRequest.cashBackStatus)}
+                                        className={getStatusCashBackColor(returnRequest.cashBackStatus)}
                                     >
-                                        {getStatusText(returnRequest.cashBackStatus)}
+                                        {getStatusCashBackText(returnRequest.cashBackStatus)}
                                     </Badge>
                                 )}
                             </TableCell>

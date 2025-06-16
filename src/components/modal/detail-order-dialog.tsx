@@ -31,7 +31,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { STATUS_ORDER } from "@/constants/order";
+import { STATUS_UPDATE_ORDER } from "@/constants/order";
 
 interface OrderDetailModalProps {
     orderId: string;
@@ -292,7 +292,7 @@ export function OrderDetailModal({
                                                 <SelectValue placeholder="Chọn trạng thái" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {STATUS_ORDER.map((status) => (
+                                                {STATUS_UPDATE_ORDER.map((status) => (
                                                     <SelectItem key={status.value} value={status.value}>
                                                         {status.label}
                                                     </SelectItem>

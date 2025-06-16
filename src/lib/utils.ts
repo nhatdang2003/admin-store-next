@@ -3,6 +3,8 @@ import {
     PAYMENT_STATUS,
     SHIPPING_METHOD,
     STATUS_ORDER,
+    STATUS_RETURN,
+    CASH_BACK_STATUS,
 } from "@/constants/order";
 import { COLOR } from "@/constants/product";
 import { GENDER_OPTIONS } from "@/constants/profile";
@@ -25,12 +27,28 @@ export const getStatusText = (status: string) => {
     return STATUS_ORDER.find((item: any) => item.value === status)?.label;
 };
 
+export const getStatusReturnText = (status: string) => {
+    return STATUS_RETURN.find((item: any) => item.value === status)?.label;
+};
+
+export const getStatusCashBackText = (status: string) => {
+    return CASH_BACK_STATUS.find((item: any) => item.value === status)?.label;
+};
+
 export const getPaymentStatusText = (status: string) => {
     return PAYMENT_STATUS.find((item: any) => item.value === status)?.label;
 };
 
 export const getStatusColor = (status: string) => {
     return STATUS_ORDER.find((item: any) => item.value === status)?.color;
+};
+
+export const getStatusReturnColor = (status: string) => {
+    return STATUS_RETURN.find((item: any) => item.value === status)?.color;
+};
+
+export const getStatusCashBackColor = (status: string) => {
+    return CASH_BACK_STATUS.find((item: any) => item.value === status)?.color;
 };
 
 export const getPaymentStatusColor = (status: string) => {

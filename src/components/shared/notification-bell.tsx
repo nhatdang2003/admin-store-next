@@ -75,21 +75,17 @@ const NotificationItem = ({ notification, markNotificationAsRead, setOrderId, se
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                         <Badge
                             variant="outline"
                             className={`text-xs ${getNotificationTypeColor(notification.type)}`}
                         >
-                            {notification.type}
+                            {notification.title}
                         </Badge>
                         {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                         )}
                     </div>
-
-                    <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-1">
-                        {notification.title}
-                    </h4>
 
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                         {notification.content}

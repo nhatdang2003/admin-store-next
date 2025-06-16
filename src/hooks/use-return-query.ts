@@ -24,6 +24,7 @@ export const useUpdateReturnRequestStatusMutation = () => {
             returnApi.updateReturnRequestStatus(id, status, adminComment),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["return-requests"] });
+            queryClient.invalidateQueries({ queryKey: ["return-request"] });
             toast({
                 variant: "success",
                 title: "Thành công",
@@ -48,6 +49,7 @@ export const useUpdateCashBackStatusMutation = () => {
             returnApi.updateCashBackStatus(id, cashBackStatus),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["return-requests"] });
+            queryClient.invalidateQueries({ queryKey: ["return-request"] });
             toast({
                 variant: "success",
                 title: "Thành công",

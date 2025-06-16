@@ -22,3 +22,38 @@ export const useNewOrders = () => {
         queryFn: () => orderApi.getOrders(1, 5),
     });
 };
+
+export const useSummary = () => {
+    return useQuery({
+        queryKey: ["summary"],
+        queryFn: () => dashboardApi.getSummary(),
+    });
+};
+
+export const useCategorySalesChart = (period: string) => {
+    return useQuery({
+        queryKey: ["category-sales-chart", period],
+        queryFn: () => dashboardApi.getCategorySalesChart(period),
+    });
+};
+
+export const useTopProducts = (period: string) => {
+    return useQuery({
+        queryKey: ["top-products", period],
+        queryFn: () => dashboardApi.getTopProducts(period),
+    });
+};
+
+export const useLowStockProducts = () => {
+    return useQuery({
+        queryKey: ["low-stock-products"],
+        queryFn: () => dashboardApi.getLowStockProducts(),
+    });
+};
+
+export const useTopReturnRequests = () => {
+    return useQuery({
+        queryKey: ["top-return-requests"],
+        queryFn: () => dashboardApi.getTopReturnRequests(),
+    });
+};

@@ -2,7 +2,7 @@ import { httpClient } from "./axios-config";
 
 export const returnApi = {
     getReturnRequests: async (page: number, size: number, status?: string, search?: string) => {
-        let url = `/api/v1/return-requests?page=${page - 1}&size=${size}`;
+        let url = `/api/v1/return-requests?page=${page - 1}&size=${size}&sort=createdAt,desc`;
         if (status) {
             url += `&filter=status~'${status}'`;
         }

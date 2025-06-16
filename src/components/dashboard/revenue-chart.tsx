@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import {
-    Bar,
-    BarChart,
+    Line,
+    LineChart,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
     Label,
+    Legend,
+    ReferenceLine,
 } from "recharts";
 import {
     Card,
@@ -61,26 +63,23 @@ export default function RevenueChart() {
     const [selectedYear, setSelectedYear] = useState(
         new Date().getFullYear().toString()
     );
-    const { data: revenueData, isLoading } = useRevenueByMonth(selectedYear);
+    const { data: chartData, isLoading } = useRevenueByMonth(selectedYear);
 
-    const formattedData = revenueData?.revenueByMonth.map((item: any) => ({
-        ...item,
-        revenue: Number((item.revenue / 1000000).toFixed(1)), // Convert to millions
-        monthName: monthNames[item.month - 1],
+    const formattedData = chartData?.labels.map((label: string, index: number) => ({
+        month: label,
+        revenue: Number((chartData.datasets[0].data[index] / 1000000).toFixed(1)), // Convert to millions
+        orders: chartData.datasets[1].data[index],
     }));
 
     return (
-        <Card className="w-full mb-8">
+        <Card className="w-full">
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle>Doanh Thu Hàng Tháng</CardTitle>
-                        <CardDescription>
-                            Tổng quan doanh thu cho năm {selectedYear}
-                        </CardDescription>
+                        <CardTitle className="text-lg font-bold">Doanh thu & đơn hàng hàng tháng</CardTitle>
                     </div>
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Chọn năm" />
                         </SelectTrigger>
                         <SelectContent>
@@ -96,27 +95,151 @@ export default function RevenueChart() {
             <CardContent>
                 <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
+                        <LineChart
                             data={formattedData}
-                            margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+                            margin={{ top: 0, right: 20, left: 20, bottom: 30 }}
                         >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="monthName" />
+                            <defs>
+                                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor="#1E40AF" stopOpacity={1} />
+                                </linearGradient>
+                                <linearGradient id="ordersGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor="#D97706" stopOpacity={1} />
+                                </linearGradient>
+                                <filter id="dropShadow">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3" />
+                                </filter>
+                            </defs>
+                            <CartesianGrid
+                                strokeDasharray="2 4"
+                                stroke="hsl(var(--muted-foreground))"
+                                strokeOpacity={0.15}
+                                horizontal={true}
+                                vertical={true}
+                            />
+                            <XAxis
+                                angle={-45}
+                                dataKey="month"
+                                axisLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                                tickLine={false}
+                                tick={{
+                                    fontSize: 12,
+                                    fill: "hsl(var(--muted-foreground))",
+                                }}
+                                dy={25}
+                            />
                             <YAxis
+                                yAxisId="revenue"
+                                axisLine={{ stroke: "#1F2937", strokeWidth: 1.5 }}
+                                tickLine={false}
+                                tick={{
+                                    fontSize: 14,
+                                    fill: "#1F2937",
+                                }}
                                 label={{
-                                    value: "Doanh Thu (Triệu VNĐ)",
+                                    value: "Doanh thu (Triệu VNĐ)",
                                     angle: -90,
                                     position: "insideLeft",
+                                    style: {
+                                        textAnchor: 'middle',
+                                        fontSize: '14px',
+                                        fill: '#1F2937'
+                                    },
                                 }}
+                                dx={-10}
+                            />
+                            <YAxis
+                                yAxisId="orders"
+                                orientation="right"
+                                axisLine={{ stroke: "#1F2937", strokeWidth: 1.5 }}
+                                tickLine={false}
+                                tick={{
+                                    fontSize: 14,
+                                    fill: "#1F2937",
+                                }}
+                                label={{
+                                    value: "Số đơn hàng",
+                                    angle: 90,
+                                    position: "insideRight",
+                                    style: {
+                                        textAnchor: 'middle',
+                                        fontSize: '14px',
+                                        fill: '#1F2937'
+                                    },
+                                }}
+                                dx={10}
                             />
                             <Tooltip
-                                formatter={(value) => [`${value} Triệu`, "Doanh Thu"]}
-                                labelFormatter={(label) => `Tháng: ${label}`}
+                                content={({ active, payload, label }) => {
+                                    if (active && payload && payload.length) {
+                                        return (
+                                            <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+                                                <p className=" text-gray-800 mb-2">{label}</p>
+                                                {payload.map((entry, index) => (
+                                                    <div key={index} className="flex items-center gap-2 text-sm">
+                                                        <div
+                                                            className="w-3 h-3 rounded-full"
+                                                            style={{ backgroundColor: entry.color }}
+                                                        />
+                                                        <span className="font-medium" style={{ color: entry.color }}>
+                                                            {entry.name}:
+                                                        </span>
+                                                        <span className="text-gray-700 font-semibold">
+                                                            {String(entry.name)?.includes('Doanh thu')
+                                                                ? `${entry.value} triệu VNĐ`
+                                                                : `${entry.value} đơn`
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }}
                             />
-                            <Bar dataKey="revenue" fill="hsl(var(--primary))">
-                                <Label content={CustomBarLabel} position="top" />
-                            </Bar>
-                        </BarChart>
+                            <Legend
+                                verticalAlign="top"
+                                height={36}
+                                iconType="line"
+                                wrapperStyle={{
+                                    paddingBottom: '20px',
+                                    fontSize: '14px',
+                                }}
+                            />
+                            <ReferenceLine
+                                yAxisId="revenue"
+                                x={0}
+                                stroke="#16A34A"
+                                strokeWidth={2}
+                                strokeDasharray="4 4"
+                                strokeOpacity={0.4}
+                            />
+                            <ReferenceLine
+                                yAxisId="orders"
+                                x={formattedData?.length ? formattedData.length - 1 : 11}
+                                stroke="#1F2937"
+                                strokeWidth={2}
+                                strokeDasharray="4 4"
+                                strokeOpacity={0.4}
+                            />
+                            <Line
+                                yAxisId="revenue"
+                                type="monotone"
+                                dataKey="revenue"
+                                stroke="#16A34A"
+                                name="Doanh thu"
+                            />
+                            <Line
+                                yAxisId="orders"
+                                type="monotone"
+                                dataKey="orders"
+                                stroke="#1F2937"
+                                name="Số đơn hàng"
+                            />
+                        </LineChart>
                     </ResponsiveContainer>
                 </div>
             </CardContent>

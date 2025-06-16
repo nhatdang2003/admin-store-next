@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Pencil, Trash2, MoreHorizontal, Download, Loader2, ChevronDown, FileUp } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -32,18 +32,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getColorText } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useExportExcelStock, useImportStockQuery, useStockQuery } from "@/hooks/use-stock-query";
+import { useExportExcelStock, useImportStockQuery, useStockQuery, useUpdateStockQuery } from "@/hooks/use-stock-query";
+import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { CASH_BACK_STATUS, STATUS_RETURN } from "@/constants/order";
 
 export default function ProductList() {
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const page = searchParams.get("page");
     const search = searchParams.get("search");
-
-    const { data, isLoading } = useStockQuery(Number(page || 1), 10, search || "");
+    const sort = searchParams.get("sort");
+    const router = useRouter();
+    const { data, isLoading } = useStockQuery(Number(page || 1), 10, search || "", sort === "all" ? undefined : sort || "");
     const { mutate: exportStock, isPending: isExportStockLoading } = useExportExcelStock();
     const { mutate: importStock, isPending: isImportStockPending } = useImportStockQuery();
+    const { mutate: updateStock, isPending: isUpdateStockPending } = useUpdateStockQuery();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const [openUpdateStock, setOpenUpdateStock] = useState(false);
+    const [sku, setSku] = useState<any>(null);
+    const [quantity, setQuantity] = useState<any>(0);
+    const [note, setNote] = useState<any>("");
 
     const handleImportExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -74,6 +86,18 @@ export default function ProductList() {
     const stocks = data?.data || [];
     const meta = data?.meta;
 
+    const handleSort = (value: string) => {
+        const params = new URLSearchParams(searchParams);
+
+        if (value) {
+            params.set("page", "1");
+            params.set("sort", value);
+        } else {
+            params.delete("sort");
+        }
+        router.push(`${pathname}?${params.toString()}`);
+    }
+
     return (
         <div className="space-y-4">
             <input
@@ -86,7 +110,18 @@ export default function ProductList() {
             <h2 className="text-3xl font-bold tracking-tight">Tồn kho</h2>
             <div className="flex justify-between items-center">
                 <SearchInput placeholder="Tìm kiếm sản phẩm..." className="w-[300px]" />
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-gray-500">Sắp xếp</p>
+                    <Select value={sort || "all"} onValueChange={handleSort}>
+                        <SelectTrigger className="w-[170px]">
+                            <SelectValue placeholder="Sắp xếp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Mã sản phẩm</SelectItem>
+                            <SelectItem value="asc">Số lượng tăng dần</SelectItem>
+                            <SelectItem value="desc">Số lượng giảm dần</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
@@ -153,10 +188,15 @@ export default function ProductList() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            className="text-destructive py-2 px-4 focus:text-destructive cursor-pointer"
-                                            onClick={() => { }}
+                                            className="py-2 px-4 cursor-pointer"
+                                            onClick={() => {
+                                                setOpenUpdateStock(true);
+                                                setSku(stock.sku);
+                                                setQuantity(stock.quantityInStock);
+                                                setNote(stock.note);
+                                            }}
                                         >
-                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            <Pencil className="mr-2 h-4 w-4" />
                                             Cập nhật
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -170,6 +210,53 @@ export default function ProductList() {
             {meta && (
                 <Pagination currentPage={meta.page + 1} totalPages={meta.pages} />
             )}
+
+            <Dialog open={openUpdateStock} onOpenChange={setOpenUpdateStock}>
+                <DialogContent className="p-0">
+                    <DialogHeader className="px-4 py-2 sm:px-6 sm:py-4 border-b">
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="text-lg sm:text-xl">
+                                Cập nhật tồn kho
+                            </DialogTitle>
+                        </div>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 p-4">
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm text-gray-500">Mã sản phẩm</p>
+                            <Input type="text" value={sku} readOnly />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm text-gray-500">Số lượng</p>
+                            <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm text-gray-500">Ghi chú</p>
+                            <Textarea value={note} onChange={(e) => setNote(e.target.value)}
+                                rows={3} className="resize-none" />
+                        </div>
+
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setOpenUpdateStock(false)}>
+                                Hủy
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    updateStock({
+                                        sku: sku,
+                                        quantity: quantity,
+                                        note: note
+                                    })
+                                    setOpenUpdateStock(false);
+                                }}
+                                disabled={isUpdateStockPending}
+                            >
+                                Cập nhật
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
