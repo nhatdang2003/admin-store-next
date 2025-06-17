@@ -8,6 +8,13 @@ export const imageApi = {
         });
         return response.data;
     },
+    getPresignedUrlPromotion: async (fileName: string) => {
+        const [name, extension] = fileName.split(".");
+        const response = await httpClient.post("/api/v1/promotions/upload-images", {
+            fileName: `${name}-${new Date().getTime()}.${extension}`,
+        });
+        return response.data;
+    },
     uploadImage: async (presignedUrl: string, file: File) => {
         const response = await fetch(presignedUrl, {
             method: "PUT",
