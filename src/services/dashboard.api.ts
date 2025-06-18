@@ -12,7 +12,7 @@ export const dashboardApi = {
     },
 
     getSummary: async () => {
-        const response = await httpClient.get("/api/v1/workspace/dashboard/summary?period=this_week");
+        const response = await httpClient.get("/api/v1/workspace/dashboard/summary?period=this_month");
         return response.data;
     },
 

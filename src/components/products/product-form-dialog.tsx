@@ -489,6 +489,7 @@ export function ProductFormDialog({
                                             Số lượng
                                         </Label>
                                         <Input
+                                            disabled={mode === "edit"}
                                             type="number"
                                             {...register(`variants.${index}.quantity`, {
                                                 required: "Vui lòng nhập số lượng",
